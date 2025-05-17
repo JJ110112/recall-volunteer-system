@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code 產生器 - 罷免志工班表系統</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="container py-4">
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="index.html">首頁</a></li>
+        <li class="breadcrumb-item active" aria-current="page">QR Code 產生器</li>
+      </ol>
+    </nav>
+    
+    <h2 class="text-center mb-4">QR Code 產生器</h2>
+    
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">設定 QR Code</h5>
+          </div>
+          <div class="card-body">
+            <form id="qrcodeForm">
+              <div class="mb-3">
+                <label for="qrcodeType" class="form-label">QR Code 類型</label>
+                <select class="form-select" id="qrcodeType">
+                  <option value="area">區域報名</option>
+                  <option value="specific">特定時段報名</option>
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label for="qrcodeArea" class="form-label">區域</label>
+                <select class="form-select" id="qrcodeArea">
+                  <option value="南中正">南中正</option>
+                  <option value="景美">景美</option>
+                  <option value="木柵">木柵</option>
+                </select>
+              </div>
+              
+              <div class="mb-3" id="qrcodeDateContainer" style="display: none;">
+                <label for="qrcodeDate" class="form-label">日期 (僅特定時段)</label>
+                <input type="date" class="form-control" id="qrcodeDate">
+              </div>
+              
+              <div class="mb-3" id="qrcodeLocationContainer" style="display: none;">
+                <label for="qrcodeLocation" class="form-label">站點 (僅特定時段)</label>
+                <select class="form-select" id="qrcodeLocation">
+                  <option value="">請先選擇區域和日期</option>
+                </select>
+              </div>
+              
+              <div class="mb-3">
+                <label for="qrcodeSize" class="form-label">QR Code 大小</label>
+                <select class="form-select" id="qrcodeSize">
+                  <option value="100">小 (100x100)</option>
+                  <option value="200" selected>中 (200x200)</option>
+                  <option value="300">大 (300x300)</option>
+                  <option value="500">特大 (500x500)</option>
+                </select>
+              </div>
+              
+              <div class="d-grid">
+                <button type="button" class="btn btn-primary" id="generateQRCodeBtn">產生 QR Code</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <div class="card d-none" id="batchQRCodeCard">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">批量產生 QR Code</h5>
+          </div>
+          <div class="card-body">
+            <p>您可以為特定區域內的所有站點一次性產生 QR Code。</p>
+            <div class="mb-3">
+              <label for="batchQRCodeArea" class="form-label">區域</label>
+              <select class="form-select" id="batchQRCodeArea">
+                <option value="南中正">南中正</option>
+                <option value="景美">景美</option>
+                <option value="木柵">木柵</option>
+              </select>
+            </div>
+            <div class="d-grid">
+              <button type="button" class="btn btn-outline-primary" id="generateBatchQRCodeBtn">
+                <i class="bi bi-qr-code"></i> 批量產生
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-8">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">QR Code 預覽</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6 text-center">
+                <div id="qrcodeDisplay" class="mb-3 d-flex justify-content-center">
+                  <div class="border p-3">
+                    <p class="text-muted">請設定參數並產生 QR Code</p>
+                  </div>
+                </div>
+                <div id="qrcodeDownloadContainer" class="d-none">
+                  <button class="btn btn-primary mb-2" id="downloadQRCodeBtn">
+                    <i class="bi bi-download"></i> 下載 QR Code
+                  </button>
+                  <div class="d-grid">
+                    <button class="btn btn-outline-secondary" id="printQRCodeBtn">
+                      <i class="bi bi-printer"></i> 列印 QR Code
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-header bg-light">
+                    <h6 class="mb-0">QR Code 資訊</h6>
+                  </div>
+                  <div class="card-body">
+                    <div id="qrcodeInfo">
+                      <p class="text-muted">請設定參數並產生 QR Code</p>
+                    </div>
+                    <div id="qrcodeUrlContainer" class="d-none">
+                      <small class="text-muted d-block mb-1">QR Code 連結:</small>
+                      <div class="input-group mb-3">
+                        <input type="text" class="form-control form-control-sm" id="qrcodeUrl" readonly>
+                        <button class="btn btn-outline-secondary btn-sm" type="button" id="copyQRCodeUrlBtn">
+                          <i class="bi bi-clipboard"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card mt-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">使用說明</h5>
+          </div>
+          <div class="card-body">
+            <h6>QR Code 使用方法</h6>
+            <ol>
+              <li>選擇您想要產生的 QR Code 類型：
+                <ul>
+                  <li><strong>區域報名</strong>：志工掃描後，會直接進入該區域的報名頁面</li>
+                  <li><strong>特定時段報名</strong>：志工掃描後，會直接進入指定區域、日期和站點的報名頁面</li>
+                </ul>
+              </li>
+              <li>選擇區域（南中正、景美或木柵）</li>
+              <li>如果選擇「特定時段報名」，則需要選擇日期和站點</li>
+              <li>選擇 QR Code 的大小</li>
+              <li>點擊「產生 QR Code」按鈕</li>
+              <li>產生後，可以下載或列印 QR Code</li>
+            </ol>
+            
+            <h6 class="mt-4">建議使用方式</h6>
+            <ul>
+              <li>將 QR Code 印製在宣傳單上，方便志工快速報名</li>
+              <li>在站點張貼 QR Code，讓路過的民眾可以立即報名</li>
+              <li>在社群媒體上分享 QR Code 連結</li>
+              <li>每個站點建議使用不同的 QR Code，方便統計來源</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/config.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // 切換 QR Code 選項顯示
+      document.getElementById('qrcodeType').addEventListener('change', toggleQrCodeOptions);
+      
+      // 產生 QR Code 按鈕點擊
+      document.getElementById('generateQRCodeBtn').addEventListener('click', generateQRCode);
+      
+      // 複製 QR Code 網址按鈕點擊
+      document.getElementById('copyQRCodeUrlBtn').addEventListener('click', copyQRCodeUrl);
+      
+      // 下載 QR Code 按鈕點擊
+      document.getElementById('downloadQRCodeBtn').addEventListener('click', downloadQRCode);
+      
+      // 列印 QR Code 按鈕點擊
+      document.getElementById('printQRCodeBtn').addEventListener('click', printQRCode);
+      
+      // 初始化區域選擇器事件
+      document.getElementById('qrcodeArea').addEventListener('change', updateLocationSelector);
+      
+      // 批量產生 QR Code 按鈕點擊
+      document.getElementById('generateBatchQRCodeBtn').addEventListener('click', generateBatchQRCode);
+      
+      // 初始化日期選項
+      initDates();
+    });
+    
+    /**
+     * 切換 QR Code 選項顯示
+     */
+    function toggleQrCodeOptions() {
+      const qrcodeType = document.getElementById('qrcodeType').value;
+      const qrcodeDateContainer = document.getElementById('qrcodeDateContainer');
+      const qrcodeLocationContainer = document.getElementById('qrcodeLocationContainer');
+      
+      if (qrcodeType === 'area') {
+        qrcodeDateContainer.style.display = 'none';
+        qrcodeLocationContainer.style.display = 'none';
+      } else {
+        qrcodeDateContainer.style.display = 'block';
+        qrcodeLocationContainer.style.display = 'block';
+      }
+    }
+    
+    /**
+     * 初始化日期選項
+     */
+    function initDates() {
+      const dateInput = document.getElementById('qrcodeDate');
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
+      // 設置最小日期為明天
+      dateInput.min = formatDateString(tomorrow);
+      
+      // 預設選擇未來 3 天
+      const defaultDate = new Date(today);
+      defaultDate.setDate(defaultDate.getDate() + 3);
+      dateInput.value = formatDateString(defaultDate);
+    }
+    
+    /**
+     * 將日期物件轉換為 YYYY-MM-DD 格式的字串
+     */
+    function formatDateString(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    
+    /**
+     * 根據區域更新站點選擇器
+     */
+    function updateLocationSelector() {
+      const area = document.getElementById('qrcodeArea').value;
+      const locationSelector = document.getElementById('qrcodeLocation');
+      
+      // 清空現有選項
+      locationSelector.innerHTML = '<option value="">載入中...</option>';
+      
+      // 模擬 API 請求
+      setTimeout(() => {
+        let options = '<option value="">請選擇站點</option>';
+        
+        if (area === '南中正') {
+          options += `
+            <option value="財政部">財政部</option>
+            <option value="南昌公園">南昌公園</option>
+            <option value="中正紀念堂">中正紀念堂</option>
+          `;
+        } else if (area === '景美') {
+          options += `
+            <option value="景美站1號出口">景美站1號出口</option>
+            <option value="景美站3號出口">景美站3號出口</option>
+            <option value="景美夜市">景美夜市</option>
+          `;
+        } else if (area === '木柵') {
+          options += `
+            <option value="萬芳醫院">萬芳醫院</option>
+            <option value="萬芳社區">萬芳社區</option>
+            <option value="木柵市場">木柵市場</option>
+          `;
+        }
+        
+        locationSelector.innerHTML = options;
+      }, 500);
+    }
+    
+    /**
+     * 產生 QR Code
+     */
+    function generateQRCode() {
+      const type = document.getElementById('qrcodeType').value;
+      const area = document.getElementById('qrcodeArea').value;
+      const size = document.getElementById('qrcodeSize').value;
+      
+      let url = `${window.location.origin}${window.location.pathname.replace('qrcode.html', 'volunteer.html')}?area=${encodeURIComponent(area)}`;
+      
+      if (type === 'specific') {
+        const date = document.getElementById('qrcodeDate').value;
+        const locationEl = document.getElementById('qrcodeLocation');
+        const location = locationEl.value;
+        
+        if (!date) {
+          alert('請選擇日期');
+          return;
+        }
+        
+        if (!location) {
+          alert('請選擇站點');
+          return;
+        }
+        
+        url += `&date=${encodeURIComponent(date)}&location=${encodeURIComponent(location)}`;
+      }
+      
+      // 清空現有 QR Code
+      document.getElementById('qrcodeDisplay').innerHTML = '';
+      
+      // 產生 QR Code
+      QRCode.toCanvas(document.getElementById('qrcodeDisplay'), url, {
+        width: parseInt(size),
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      }, function(error) {
+        if (error) {
+          console.error('產生 QR Code 時發生錯誤:', error);
+          document.getElementById('qrcodeDisplay').innerHTML = '<div class="alert alert-danger">產生 QR Code 時發生錯誤</div>';
+        } else {
+          // 顯示下載按鈕
+          document.getElementById('qrcodeDownloadContainer').classList.remove('d-none');
+          
+          // 顯示連結資訊
+          document.getElementById('qrcodeUrlContainer').classList.remove('d-none');
+          document.getElementById('qrcodeUrl').value = url;
+          
+          // 更新 QR Code 資訊
+          let infoHtml = `
+            <p><strong>區域:</strong> ${area}</p>
+          `;
+          
+          if (type === 'specific') {
+            const date = document.getElementById('qrcodeDate').value;
+            const locationEl = document.getElementById('qrcodeLocation');
+            const locationText = locationEl.options[locationEl.selectedIndex].text;
+            
+            infoHtml += `
+              <p><strong>日期:</strong> ${date}</p>
+              <p><strong>站點:</strong> ${locationText}</p>
+            `;
+          }
+          
+          infoHtml += `<p><strong>大小:</strong> ${size}x${size} 像素</p>`;
+          
+          document.getElementById('qrcodeInfo').innerHTML = infoHtml;
+        }
+      });
+    }
+    
+    /**
+     * 複製 QR Code 網址
+     */
+    function copyQRCodeUrl() {
+      const urlInput = document.getElementById('qrcodeUrl');
+      urlInput.select();
+      document.execCommand('copy');
+      
+      // 顯示複製成功提示
+      const btn = document.getElementById('copyQRCodeUrlBtn');
+      const originalInnerHTML = btn.innerHTML;
+      btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+      
+      setTimeout(() => {
+        btn.innerHTML = originalInnerHTML;
+      }, 1500);
+    }
+    
+    /**
+     * 下載 QR Code
+     */
+    function downloadQRCode() {
+      const canvas = document.querySelector('#qrcodeDisplay canvas');
+      if (!canvas) return;
+      
+      const type = document.getElementById('qrcodeType').value;
+      const area = document.getElementById('qrcodeArea').value;
+      
+      let filename = `罷免志工_${area}`;
+      
+      if (type === 'specific') {
+        const date = document.getElementById('qrcodeDate').value;
+        const locationEl = document.getElementById('qrcodeLocation');
+        const locationText = locationEl.options[locationEl.selectedIndex].text;
+        
+        filename += `_${date}_${locationText}`;
+      }
+      
+      filename += '.png';
+      
+      const link = document.createElement('a');
+      link.download = filename;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    /**
+     * 列印 QR Code
+     */
+    function printQRCode() {
+      const canvas = document.querySelector('#qrcodeDisplay canvas');
+      if (!canvas) return;
+      
+      const type = document.getElementById('qrcodeType').value;
+      const area = document.getElementById('qrcodeArea').value;
+      
+      let title = `罷免志工 QR Code - ${area}`;
+      
+      if (type === 'specific') {
+        const date = document.getElementById('qrcodeDate').value;
+        const locationEl = document.getElementById('qrcodeLocation');
+        const locationText = locationEl.options[locationEl.selectedIndex].text;
+        
+        title += ` - ${date} - ${locationText}`;
+      }
+      
+      const printWindow = window.open('', '_blank');
+      const imgUrl = canvas.toDataURL('image/png');
+      
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${title}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              text-align: center;
+              padding: 20px;
+            }
+            img {
+              max-width: 100%;
+              height: auto;
+            }
+            .page-break {
+              page-break-after: always;
+            }
+            .qr-container {
+              margin-bottom: 20px;
+            }
+          </style>
+        </head>
+        <body>
+          <h2>${title}</h2>
+          <div class="qr-container">
+            <img src="${imgUrl}" alt="QR Code">
+          </div>
+          <p>掃描上方 QR Code 報名志工活動</p>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            };
+          </script>
+        </body>
+        </html>
+      `);
+      
+      printWindow.document.close();
+    }
+    
+    /**
+     * 批量產生 QR Code
+     */
+    function generateBatchQRCode() {
+      const area = document.getElementById('batchQRCodeArea').value;
+      
+      alert(`批量產生 ${area} 區域的 QR Code 功能尚未實作。將在未來版本中提供。`);
+    }
+  </script>
+</body>
+</html>
