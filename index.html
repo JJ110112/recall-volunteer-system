@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>罷免志工班表系統</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <div class="card shadow-lg">
+          <div class="card-header bg-primary text-white text-center py-3">
+            <h2 class="mb-0">罷免志工班表系統</h2>
+          </div>
+          <div class="card-body p-4">
+            <!-- 身分選擇按鈕 -->
+            <div class="d-grid gap-4 mb-4">
+              <a href="volunteer.html" class="btn btn-lg btn-outline-primary">
+                <i class="bi bi-person-fill me-2"></i>我是志工
+              </a>
+              <a href="admin.html" class="btn btn-lg btn-outline-secondary">
+                <i class="bi bi-shield-lock-fill me-2"></i>管理員登入
+              </a>
+            </div>
+            
+            <!-- 區域選擇 (志工快速入口) -->
+            <div class="mt-5">
+              <h5 class="text-center mb-3">選擇您的區域直接報名</h5>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <a href="volunteer.html?area=南中正" class="d-block p-3 text-center border rounded">
+                    <strong>南中正</strong>
+                  </a>
+                </div>
+                <div class="col-md-4">
+                  <a href="volunteer.html?area=景美" class="d-block p-3 text-center border rounded">
+                    <strong>景美</strong>
+                  </a>
+                </div>
+                <div class="col-md-4">
+                  <a href="volunteer.html?area=木柵" class="d-block p-3 text-center border rounded">
+                    <strong>木柵</strong>
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 系統資訊 -->
+            <div class="text-center text-muted mt-5">
+              <small>系統版本: <span id="version">載入中...</span></small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
