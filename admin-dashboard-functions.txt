@@ -1,0 +1,11 @@
+admin-dashboard.html
+This HTML file provides a complete admin interface with:
+
+1.Responsive Dashboard: Works on desktop and mobile devices
+2.Navigation Sidebar: Easy access to all management functions
+3.Statistics Cards: Quick overview of key metrics
+4.Data Tables: For managing schedules, volunteers, locations, and admins
+5.Filtering System: For each data table to easily find information
+6.Modal Forms: For adding and editing items
+7.Chart Integration: For visual reports
+8.Notification System: Interface for sending messages to volunteers
