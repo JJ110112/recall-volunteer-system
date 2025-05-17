@@ -4,8 +4,8 @@
 
 const CONFIG = {
   // API 網址 (Google Apps Script 部署網址)
-  API_URL: 'https://script.google.com/macros/s/AKfycbzQVcBX1LADbBSMjrdZMGZrJVzhrqsHAU7NZs7UgIhFLFN9Jt4L5YJvtvU2dZ6BXl2H/exec',
-  
+  API_URL: 'https://script.google.com/macros/s/AKfycbzBydYi14NWQSPfcb7_yYIKCO1C4CgC5waUdBVSU9lD7pDQU2vF5Dgg03j4XPoHxEEW/exec',
+    
   // 系統名稱
   SYSTEM_NAME: '罷免志工班表系統',
   
