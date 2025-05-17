@@ -26,6 +26,17 @@ function init(area, date) {
     document.getElementById('selectedArea').textContent = area;
     document.getElementById('areaSelectDiv').classList.add('d-none');
     document.getElementById('hiddenArea').value = area;
+    
+    // 在區域下拉選單中選擇對應的選項（如果選單可見）
+    const areaSelect = document.getElementById('area');
+    if (areaSelect) {
+      for (let i = 0; i < areaSelect.options.length; i++) {
+        if (areaSelect.options[i].value === area) {
+          areaSelect.selectedIndex = i;
+          break;
+        }
+      }
+    }
   }
   
   // 初始化日期選項
