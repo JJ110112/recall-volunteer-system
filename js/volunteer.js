@@ -1,3 +1,24 @@
+// volunteer.js - 志工前台活動列表與登記
+
+// 活動資料（目前為空，預留Google Sheet串接）
+let activities = [];
+
+// 取得Cookie
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return '';
+}
+
+// 設定Cookie
+function setCookie(name, value, days = 365) {
+  const d = new Date();
+  d.setTime(d.getTime() + (days*24*60*60*1000));
+  document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
+}
+
+// 提交註冊函數
 async function submitRegistration(payload) {
   const resultDiv = document.getElementById('registerResult');
   resultDiv.className = 'alert alert-info';
@@ -10,7 +31,7 @@ async function submitRegistration(payload) {
     const form = document.createElement('form');
     form.style.display = 'none';
     form.method = 'POST';
-    form.action = 'https://script.google.com/macros/s/AKfycbweFq6yYsv6YAbd7qiHSSsVIOjl88FiC6suYUWL3s8LsSIo45duVhDMX_lo9_erP9inWw/exec';
+    form.action = 'https://script.google.com/macros/s/AKfycbxboXwGXFylGq6nbbMCt0WeoMQfP-v904d0DOe6LeYL/exec';
     form.target = 'submission_iframe';
     
     // 設置表單數據
@@ -39,8 +60,10 @@ async function submitRegistration(payload) {
         try {
           const iframeContent = iframe.contentDocument || iframe.contentWindow.document;
           const responseText = iframeContent.body.innerText;
+          console.log('iframe響應:', responseText);
           response = JSON.parse(responseText);
         } catch (err) {
+          console.warn('無法解析iframe響應:', err);
           // 可能無法訪問 iframe 內容，視為成功
           response = { success: true, message: '操作可能已成功，請刷新頁面確認' };
         }
@@ -81,24 +104,6 @@ async function submitRegistration(payload) {
     document.body.appendChild(form);
     form.submit();
   });
-}// volunteer.js - 志工前台活動列表與登記
-
-// 活動資料（目前為空，預留Google Sheet串接）
-let activities = [];
-
-// 取得Cookie
-function getCookie(name) {
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop().split(';').shift();
-  return '';
-}
-
-// 設定Cookie
-function setCookie(name, value, days = 365) {
-  const d = new Date();
-  d.setTime(d.getTime() + (days*24*60*60*1000));
-  document.cookie = `${name}=${value};expires=${d.toUTCString()};path=/`;
 }
 
 // 檢查用戶的報名狀態
@@ -107,16 +112,21 @@ async function checkRegistrationStatus(lineId) {
   
   try {
     // 使用 JSONP 方式避免 CORS 問題
-    const url = 'https://script.google.com/macros/s/AKfycbweFq6yYsv6YAbd7qiHSSsVIOjl88FiC6suYUWL3s8LsSIo45duVhDMX_lo9_erP9inWw/exec';
-    const params = `?action=getUserRegistrations&lineId=${encodeURIComponent(lineId)}&callback=handleRegistrationsResponse`;
+    const url = 'https://script.google.com/macros/s/AKfycbxboXwGXFylGq6nbbMCt0WeoMQfP-v904d0DOe6LeYL/exec';
+    const params = `?action=getUserRegistrations&lineId=${encodeURIComponent(lineId)}&callback=handleRegistrationsResponse&v=${new Date().getTime()}`;
+    
+    console.log('檢查用戶報名狀態:', url + params);
     
     return new Promise((resolve, reject) => {
       // 定義全局回調函數
       window.handleRegistrationsResponse = function(data) {
+        console.log('收到用戶報名數據:', data);
+        
         // 確保返回的是數組，並且每個項目都有必要的屬性
         if (data.success && Array.isArray(data.registrations)) {
           // 過濾掉無效的註冊項目
           const validRegistrations = data.registrations.filter(reg => reg && typeof reg === 'object' && reg.timeSlotId);
+          console.log('有效報名記錄:', validRegistrations.length);
           resolve(validRegistrations);
         } else {
           console.error('獲取註冊狀態失敗', data);
@@ -125,7 +135,9 @@ async function checkRegistrationStatus(lineId) {
         
         // 刪除已執行的腳本標籤
         const scriptElement = document.getElementById('jsonp-status-script');
-        if (scriptElement) document.body.removeChild(scriptElement);
+        if (scriptElement && scriptElement.parentNode) {
+          document.body.removeChild(scriptElement);
+        }
         
         // 清理全局回調
         delete window.handleRegistrationsResponse;
@@ -138,7 +150,28 @@ async function checkRegistrationStatus(lineId) {
       script.onerror = function() {
         console.error('檢查報名狀態失敗');
         resolve([]);
-        document.body.removeChild(script);
+        if (script.parentNode) {
+          document.body.removeChild(script);
+        }
+      };
+      
+      // 添加超時處理
+      const timeout = setTimeout(function() {
+        console.warn('檢查報名狀態超時');
+        if (window.handleRegistrationsResponse) {
+          delete window.handleRegistrationsResponse;
+        }
+        if (script.parentNode) {
+          document.body.removeChild(script);
+        }
+        resolve([]);
+      }, 10000); // 10秒超時
+      
+      // 修改成功回調以清除超時計時器
+      const originalCallback = window.handleRegistrationsResponse;
+      window.handleRegistrationsResponse = function(data) {
+        clearTimeout(timeout);
+        originalCallback(data);
       };
       
       // 添加到頁面
@@ -175,7 +208,7 @@ async function renderActivityList() {
   list.innerHTML = '';
   
   if (!activities.length) {
-    noMsg.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">載入中...</span></div><p>資料載入中...</p>';
+    noMsg.innerHTML = '目前沒有開放報名的活動';
     noMsg.classList.remove('d-none');
     return;
   }
@@ -368,7 +401,6 @@ function openRegisterModal(activityIdx, lineId) {
       setCookie('lineId', userLineId);
     }
     
-    
     try {
       // 使用新的提交註冊函數
       await submitRegistration(payload);
@@ -443,7 +475,7 @@ async function cancelRegistration(registrationId) {
       const form = document.createElement('form');
       form.style.display = 'none';
       form.method = 'POST';
-      form.action = 'https://script.google.com/macros/s/AKfycbweFq6yYsv6YAbd7qiHSSsVIOjl88FiC6suYUWL3s8LsSIo45duVhDMX_lo9_erP9inWw/exec';
+      form.action = 'https://script.google.com/macros/s/AKfycbxboXwGXFylGq6nbbMCt0WeoMQfP-v904d0DOe6LeYL/exec';
       form.target = 'cancel_iframe';
       
       // 設置表單數據
@@ -468,9 +500,26 @@ async function cancelRegistration(registrationId) {
       // 監聽 iframe 加載完成
       iframe.onload = function() {
         try {
-          // 視為成功
-          showResult('取消報名成功！', 'success');
-          resolve({ success: true });
+          // 嘗試讀取 iframe 內容
+          let response = null;
+          try {
+            const iframeContent = iframe.contentDocument || iframe.contentWindow.document;
+            const responseText = iframeContent.body.innerText;
+            console.log('取消報名響應:', responseText);
+            response = JSON.parse(responseText);
+          } catch (err) {
+            console.warn('無法解析iframe響應:', err);
+            // 視為成功
+            response = { success: true, message: '取消可能已成功，請刷新頁面確認' };
+          }
+          
+          if (response && response.success) {
+            showResult('取消報名成功！', 'success');
+            resolve(response);
+          } else {
+            showResult((response && response.message) || '取消報名失敗，請稍後再試。', 'danger');
+            reject(new Error('取消失敗'));
+          }
         } finally {
           // 清理 DOM
           setTimeout(() => {
@@ -494,6 +543,7 @@ async function cancelRegistration(registrationId) {
     });
   } catch (e) {
     showResult('取消報名失敗，請稍後再試。', 'danger');
+    throw e;
   }
 }
 
@@ -535,22 +585,47 @@ function showResult(msg, type = 'success') {
 // 獲取活動數據
 async function fetchActivities() {
   // 使用 JSONP 方式避免 CORS 問題
-  const url = 'https://script.google.com/macros/s/AKfycbweFq6yYsv6YAbd7qiHSSsVIOjl88FiC6suYUWL3s8LsSIo45duVhDMX_lo9_erP9inWw/exec';
-  const params = '?action=getActivities&callback=handleActivitiesResponse';
+  const url = 'https://script.google.com/macros/s/AKfycbxboXwGXFylGq6nbbMCt0WeoMQfP-v904d0DOe6LeYL/exec';
+  const params = '?action=getActivities&callback=handleActivitiesResponse&v=' + new Date().getTime();
+  
+  // 清理界面
+  const noMsg = document.getElementById('noActivitiesMsg');
+  noMsg.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">載入中...</span></div><p>資料載入中...</p>';
+  noMsg.classList.remove('d-none');
+  
+  console.log('正在嘗試獲取活動數據，URL:', url + params);
   
   return new Promise((resolve, reject) => {
     // 定義全局回調函數
     window.handleActivitiesResponse = function(data) {
-      if (data.success && Array.isArray(data.activities)) {
-        activities = data.activities;
-        renderActivityList();
-        resolve(data);
+      console.log('收到JSONP響應:', data);
+      
+      if (data && data.success === true) {
+        if (Array.isArray(data.activities) && data.activities.length > 0) {
+          console.log('成功獲取活動列表, 活動數量:', data.activities.length);
+          activities = data.activities;
+          renderActivityList();
+          resolve(data);
+        } else {
+          console.warn('API返回成功，但沒有活動數據:', data);
+          // 即使沒有活動，也應該清空加載提示
+          document.getElementById('noActivitiesMsg').innerHTML = '目前沒有開放報名的活動';
+          resolve(data);
+        }
       } else {
-        showResult('目前無法取得活動資料', 'danger');
-        reject('獲取活動失敗');
+        console.error('API返回失敗或格式不正確:', data);
+        showResult('無法獲取活動資料', 'danger');
+        // 顯示錯誤信息
+        document.getElementById('noActivitiesMsg').innerHTML = '無法獲取活動資料，請稍後再試';
+        reject('API返回數據格式不正確');
       }
+      
       // 刪除已執行的腳本標籤
-      document.body.removeChild(document.getElementById('jsonp-script'));
+      const scriptElement = document.getElementById('jsonp-script');
+      if (scriptElement && scriptElement.parentNode) {
+        document.body.removeChild(scriptElement);
+      }
+      
       // 清理全局回調
       delete window.handleActivitiesResponse;
     };
@@ -560,9 +635,34 @@ async function fetchActivities() {
     script.id = 'jsonp-script';
     script.src = url + params;
     script.onerror = function() {
+      console.error('JSONP腳本加載失敗');
       showResult('載入活動失敗，請稍後再試。', 'danger');
+      document.getElementById('noActivitiesMsg').innerHTML = '載入活動失敗，請稍後再試';
       reject('腳本加載失敗');
-      document.body.removeChild(script);
+      if (script.parentNode) {
+        document.body.removeChild(script);
+      }
+    };
+    
+    // 添加超時處理
+    const timeout = setTimeout(function() {
+      console.error('獲取活動數據超時');
+      if (window.handleActivitiesResponse) {
+        delete window.handleActivitiesResponse;
+      }
+      if (script.parentNode) {
+        document.body.removeChild(script);
+      }
+      document.getElementById('noActivitiesMsg').innerHTML = '獲取活動數據超時，請刷新頁面重試';
+      showResult('獲取活動數據超時', 'danger');
+      reject('請求超時');
+    }, 15000); // 15秒超時
+    
+    // 修改成功回調以清除超時計時器
+    const originalCallback = window.handleActivitiesResponse;
+    window.handleActivitiesResponse = function(data) {
+      clearTimeout(timeout);
+      originalCallback(data);
     };
     
     // 添加到頁面
