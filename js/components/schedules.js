@@ -1,5 +1,5 @@
 /**
- * schedules.js - 罷免志工班表系統班表管理模組
+ * schedules.js - 文山退葆志工班表系統班表管理模組
  * 
  * 處理所有班表相關功能
  */
@@ -756,8 +756,6 @@ async function submitEditSlot(formData) {
           scheduleData[slotIndex].status = '充足';
         } else if (currentCount > 0) {
           scheduleData[slotIndex].status = '不足';
-        } else {
-          scheduleData[slotIndex].status = '極度不足';
         }
         
         // 重新渲染班表

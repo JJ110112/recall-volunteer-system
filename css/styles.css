@@ -1,7 +1,7 @@
 /* 通用樣式 */
 body {
   font-family: 'Noto Sans TC', sans-serif;
-  background-color: #f8f9fa;
+  background-color: #fcf7ef;
 }
 
 .card {
@@ -23,10 +23,10 @@ body {
 }
 
 .row a:hover {
-  background-color: #f1f8ff;
+  background-color: #fff3cd;
   transform: translateY(-3px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  border-color: #0d6efd;
+  border-color: #bfa15a;
 }
 
 /* 時段選擇樣式 */
@@ -41,15 +41,15 @@ body {
 }
 
 .time-slot:hover:not(.full) {
-  background-color: #f8f9fa;
+  background-color: #fcf7ef;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
 .time-slot.selected {
-  background-color: #d1e7dd;
-  border-color: #198754;
-  box-shadow: 0 0 0 3px rgba(25, 135, 84, 0.25);
+  background-color: #fff3cd;
+  border-color: #bfa15a;
+  box-shadow: 0 0 0 3px rgba(191, 161, 90, 0.25);
 }
 
 .time-slot .badge {
@@ -65,6 +65,25 @@ body {
 .time-slot.urgent {
   background-color: #fff3cd;
   border-color: #ffc107;
+}
+
+/* 金色主題按鈕與背景 */
+.bg-primary, .btn-primary, .stat-card.primary, .nav-pills .nav-link.active {
+  background-color: #bfa15a !important;
+  border-color: #bfa15a !important;
+  color: #fff !important;
+}
+.text-primary {
+  color: #bfa15a !important;
+}
+.btn-outline-primary {
+  color: #bfa15a;
+  border-color: #bfa15a;
+}
+.btn-outline-primary:hover, .btn-outline-primary:active {
+  background-color: #bfa15a;
+  color: #fff;
+  border-color: #bfa15a;
 }
 
 /* 響應式調整 */

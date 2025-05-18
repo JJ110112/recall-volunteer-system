@@ -1,5 +1,5 @@
 /**
- * notifications.js - 罷免志工班表系統通知模組
+ * notifications.js - 文山退葆志工班表系統通知模組
  * 
  * 處理通知系統相關功能
  */

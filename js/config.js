@@ -1,5 +1,5 @@
 /**
- * config.js - 罷免志工班表系統配置文件
+ * config.js - 文山退葆志工班表系統配置文件
  * 
  * 集中管理所有系統配置和常量
  */
@@ -13,7 +13,7 @@ const CONFIG = {
   VERSION: '1.0.0',
   
   // 系統名稱
-  SYSTEM_NAME: '罷免志工班表系統',
+  SYSTEM_NAME: '文山退葆志工班表系統',
   
   // 本地存儲鍵名
   STORAGE_KEYS: {
