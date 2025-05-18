@@ -29,15 +29,19 @@ function renderActivityList() {
   }
   noMsg.classList.add('d-none');
   activities.forEach((act, idx) => {
-    // act: {id, area, date, startTime, endTime, location, address, required, current, ...}
+    // 日期格式處理
+    let dateObj = (typeof act.date === 'string' && act.date.length > 10) ? new Date(act.date) : new Date(act.date + 'T00:00:00');
+    let week = ['日','一','二','三','四','五','六'];
+    let dateStr = `${dateObj.getMonth()+1}月${dateObj.getDate()}日（星期${week[dateObj.getDay()]}）`;
+    let timeStr = `${act.startTime}~${act.endTime}`;
     const card = document.createElement('div');
     card.className = 'col-md-6 col-lg-4 mb-4';
     card.innerHTML = `
       <div class="card h-100 shadow">
         <div class="card-body">
-          <h5 class="card-title">${act.id}</h5>
-          <p class="mb-1"><i class="bi bi-geo-alt"></i> ${act.area} - ${act.location}</p>
-          <p class="mb-1"><i class="bi bi-calendar"></i> ${act.date} ${act.startTime}~${act.endTime}</p>
+          <h5 class="card-title">${act.location}</h5>
+          <p class="mb-1"><i class="bi bi-geo-alt"></i> ${act.area}</p>
+          <p class="mb-1"><i class="bi bi-calendar"></i> ${dateStr} ${timeStr}</p>
           <p class="mb-1"><i class="bi bi-people"></i> 所需人數：${act.required}</p>
           <p class="mb-1"><i class="bi bi-person"></i> 目前人數：${act.current}</p>
         </div>
