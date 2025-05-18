@@ -1,7 +1,5 @@
 /**
- * auth.js - 文山退葆志工班表系統認證模組
- * 
- * 處理管理員認證、會話管理相關功能
+ * auth.js - 文山退葆志工班表系統認證模組（已停用登入驗證）
  */
 
 // 當前登入的管理員資訊
@@ -213,9 +211,9 @@ function getCurrentAdmin() {
 
 // 導出模塊
 window.authModule = {
-  handleAdminLogin,
-  checkAdminLogin,
-  handleLogout,
-  updateAdminInfo,
-  getCurrentAdmin
+  handleAdminLogin: ()=>{},
+  checkAdminLogin: ()=>true,
+  handleLogout: ()=>{},
+  updateAdminInfo: ()=>{},
+  getCurrentAdmin: ()=>({ id: localStorage.getItem('adminLineId') || '', name: '管理員' })
 };

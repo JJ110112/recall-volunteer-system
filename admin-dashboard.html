@@ -100,6 +100,12 @@
   <!-- 主要內容 -->
   <div class="container-fluid">
     <div class="row">
+      <div class="col-12 text-end pt-3 pe-4">
+        <label for="adminLineId" class="form-label me-2">管理員 Line ID：</label>
+        <input type="text" id="adminLineId" class="form-control d-inline-block" style="width:200px;max-width:50vw;" placeholder="請輸入Line ID">
+        <button class="btn btn-outline-primary ms-2" id="saveAdminLineIdBtn">儲存</button>
+        <span id="adminLineIdSavedMsg" class="text-success ms-2 d-none">已儲存！</span>
+      </div>
       <!-- 側邊欄 -->
       <div class="col-md-3 col-lg-2 d-md-block sidebar collapse">
         <div class="position-sticky pt-3">
@@ -962,5 +968,25 @@
   
   <!-- 主入口文件 -->
   <script src="js/admin.js"></script>
+  <script>
+  // Line ID 儲存與自動帶入
+  function getLineId() {
+    return localStorage.getItem('adminLineId') || '';
+  }
+  function setLineId(lineId) {
+    localStorage.setItem('adminLineId', lineId);
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('adminLineId');
+    const btn = document.getElementById('saveAdminLineIdBtn');
+    const msg = document.getElementById('adminLineIdSavedMsg');
+    if (input) input.value = getLineId();
+    if (btn) btn.onclick = function() {
+      setLineId(input.value.trim());
+      msg.classList.remove('d-none');
+      setTimeout(()=>msg.classList.add('d-none'), 1500);
+    };
+  });
+  </script>
 </body>
 </html>
