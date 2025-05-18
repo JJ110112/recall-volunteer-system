@@ -21,8 +21,10 @@
     <h2 class="text-center mb-4">志工報名</h2>
     <div id="activityListContainer">
       <div class="alert alert-info text-center" id="noActivitiesMsg">
-        目前尚無活動，請稍後或聯絡管理員。<br>
-        <small class="text-muted">（此區塊將串接Google Sheet自動顯示活動）</small>
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">載入中...</span>
+        </div>
+        <p>資料載入中...</p>
       </div>
       <div class="row" id="activityList">
         <!-- 活動卡片將由JS動態產生 -->

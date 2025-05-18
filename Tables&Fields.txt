@@ -1,3 +1,6 @@
+
+https://docs.google.com/spreadsheets/d/181YHE0WUzTwpSlN_MBUwlvcCCODpUoqp6usZtL_FweE/edit?gid=1769897073#gid=1769897073
+
 班表設定
 時段ID	區域	日期	開始時間	結束時間	站點名稱	站點地址	所需人數	目前人數	人力狀態	備註	負責組長	是否啟用
 
