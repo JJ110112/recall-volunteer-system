@@ -92,7 +92,7 @@ function showResult(msg, type = 'success') {
 }
 
 async function fetchActivities() {
-  const url = 'https://script.google.com/macros/s/AKfycbzBydYi14NWQSPfcb7_yYIKCO1C4CgC5waUdBVSU9lD7pDQU2vF5Dgg03j4XPoHxEEW/exec?action=getActivities';
+  const url = 'https://script.google.com/macros/s/AKfycbweFq6yYsv6YAbd7qiHSSsVIOjl88FiC6suYUWL3s8LsSIo45duVhDMX_lo9_erP9inWw/exec?action=getActivities';
   try {
     const res = await fetch(url);
     const data = await res.json();

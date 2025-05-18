@@ -7,7 +7,7 @@
 // 全局配置物件
 const CONFIG = {
   // API 基礎 URL
-  API_URL: 'https://script.google.com/macros/s/AKfycbzBydYi14NWQSPfcb7_yYIKCO1C4CgC5waUdBVSU9lD7pDQU2vF5Dgg03j4XPoHxEEW/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbweFq6yYsv6YAbd7qiHSSsVIOjl88FiC6suYUWL3s8LsSIo45duVhDMX_lo9_erP9inWw/exec',
   
   // 系統版本
   VERSION: '1.0.0',
