@@ -53,15 +53,119 @@ function renderActivityList() {
     list.appendChild(card);
   });
   // 綁定登記按鈕
+  bindRegisterButtons();
+}
+
+// 報名表單 Modal 動態產生
+function openRegisterModal(activityIdx, lineId) {
+  const act = activities[activityIdx];
+  // 移除舊的 Modal
+  const oldModal = document.getElementById('registerModal');
+  if (oldModal) oldModal.remove();
+  // 建立 Modal HTML
+  const modalHtml = `
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">志工報名</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="registerName" class="form-label">志工姓名</label>
+              <input type="text" class="form-control" id="registerName" required>
+            </div>
+            <div class="mb-3">
+              <label for="registerContact" class="form-label">聯絡方式</label>
+              <input type="text" class="form-control" id="registerContact" required>
+            </div>
+            <div class="mb-3">
+              <label for="registerNotes" class="form-label">備註</label>
+              <textarea class="form-control" id="registerNotes" rows="2"></textarea>
+            </div>
+            <div id="registerResult" class="alert d-none"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+            <button type="button" class="btn btn-primary" id="submitRegisterBtn">確認報名</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  const modal = new bootstrap.Modal(document.getElementById('registerModal'));
+  modal.show();
+  document.getElementById('submitRegisterBtn').onclick = async function() {
+    const name = document.getElementById('registerName').value.trim();
+    const contact = document.getElementById('registerContact').value.trim();
+    const notes = document.getElementById('registerNotes').value.trim();
+    const resultDiv = document.getElementById('registerResult');
+    if (!name || !contact) {
+      resultDiv.className = 'alert alert-danger';
+      resultDiv.textContent = '請填寫姓名和聯絡方式';
+      resultDiv.classList.remove('d-none');
+      return;
+    }
+    resultDiv.className = 'alert alert-info';
+    resultDiv.textContent = '報名中...';
+    resultDiv.classList.remove('d-none');
+    // 呼叫 API
+    const payload = {
+      action: 'registerVolunteer',
+      name: name,
+      contact: contact,
+      area: act.area,
+      date: act.date,
+      timeSlot: act.id,
+      location: act.location,
+      startTime: act.startTime,
+      endTime: act.endTime,
+      notes: notes,
+      lineUserId: lineId,
+      needCalendarInvite: false,
+      lineNotify: true
+    };
+    try {
+      const url = 'https://script.google.com/macros/s/AKfycbweFq6yYsv6YAbd7qiHSSsVIOjl88FiC6suYUWL3s8LsSIo45duVhDMX_lo9_erP9inWw/exec';
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        resultDiv.className = 'alert alert-success';
+        resultDiv.textContent = '報名成功！';
+        setTimeout(() => { modal.hide(); }, 1500);
+      } else {
+        resultDiv.className = 'alert alert-danger';
+        resultDiv.textContent = data.message || '報名失敗，請稍後再試。';
+      }
+    } catch (e) {
+      resultDiv.className = 'alert alert-danger';
+      resultDiv.textContent = '報名失敗，請稍後再試。';
+    }
+  };
+}
+
+// 修改登記按鈕邏輯
+function bindRegisterButtons() {
   document.querySelectorAll('[data-activity-idx]').forEach(btn => {
     btn.addEventListener('click', function() {
       const idx = this.getAttribute('data-activity-idx');
-      openLineIdModal(idx);
+      const lineId = getCookie('lineId');
+      if (lineId) {
+        openRegisterModal(idx, lineId);
+      } else {
+        openLineIdModal(idx);
+      }
     });
   });
 }
 
-// 彈出Line代號輸入Modal
+// 修改 openLineIdModal，填完 Line ID 後直接進入報名表單
 function openLineIdModal(activityIdx) {
   const lineIdInput = document.getElementById('lineIdInput');
   const errorDiv = document.getElementById('lineIdError');
@@ -77,10 +181,10 @@ function openLineIdModal(activityIdx) {
       return;
     }
     setCookie('lineId', lineId);
-    // 執行登記（目前僅顯示成功，預留串接Google Sheet）
-    showResult('登記成功！您的Line代號已記錄，下次自動帶入。', 'success');
+    // 直接進入報名表單
     const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('lineIdModal'));
     modal.hide();
+    openRegisterModal(activityIdx, lineId);
   };
   // 顯示Modal
   const modal = new bootstrap.Modal(document.getElementById('lineIdModal'));
