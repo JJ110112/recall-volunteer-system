@@ -29,16 +29,17 @@ function renderActivityList() {
   }
   noMsg.classList.add('d-none');
   activities.forEach((act, idx) => {
-    // act: {id, title, area, date, time, location, required, current}
+    // act: {id, area, date, startTime, endTime, location, address, required, current, ...}
     const card = document.createElement('div');
     card.className = 'col-md-6 col-lg-4 mb-4';
     card.innerHTML = `
       <div class="card h-100 shadow">
         <div class="card-body">
-          <h5 class="card-title">${act.title}</h5>
+          <h5 class="card-title">${act.id}</h5>
           <p class="mb-1"><i class="bi bi-geo-alt"></i> ${act.area} - ${act.location}</p>
-          <p class="mb-1"><i class="bi bi-calendar"></i> ${act.date} ${act.time}</p>
-          <p class="mb-1"><i class="bi bi-people"></i> 需求：${act.current}/${act.required}</p>
+          <p class="mb-1"><i class="bi bi-calendar"></i> ${act.date} ${act.startTime}~${act.endTime}</p>
+          <p class="mb-1"><i class="bi bi-people"></i> 所需人數：${act.required}</p>
+          <p class="mb-1"><i class="bi bi-person"></i> 目前人數：${act.current}</p>
         </div>
         <div class="card-footer bg-white border-0 text-end">
           <button class="btn btn-primary btn-sm" data-activity-idx="${idx}">我要登記</button>
