@@ -582,95 +582,140 @@ function showResult(msg, type = 'success') {
   setTimeout(() => result.classList.add('d-none'), 3000);
 }
 
-// 獲取活動數據
+// fetchActivities 函數的簡化版本
+// 使用帶有重試機制的方式
 async function fetchActivities() {
-  // 使用 JSONP 方式避免 CORS 問題
-  const url = 'https://script.google.com/macros/s/AKfycbxboXwGXFylGq6nbbMCt0WeoMQfP-v904d0DOe6LeYL/exec';
-  const params = '?action=getActivities&callback=handleActivitiesResponse&v=' + new Date().getTime();
+  // 使用 iframe 方式避免 CORS 問題
+  const url = 'https://script.google.com/macros/s/AKfycbxboXwGXFylGq6nbbMCt0WeoMQfP-v904d0DOe6LeYL/exec?action=getActivities';
   
   // 清理界面
   const noMsg = document.getElementById('noActivitiesMsg');
   noMsg.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">載入中...</span></div><p>資料載入中...</p>';
   noMsg.classList.remove('d-none');
   
-  console.log('正在嘗試獲取活動數據，URL:', url + params);
+  console.log('正在嘗試獲取活動數據，URL:', url);
   
+  // 創建一個隱藏的 iframe 來獲取數據
   return new Promise((resolve, reject) => {
-    // 定義全局回調函數
-    window.handleActivitiesResponse = function(data) {
-      console.log('收到JSONP響應:', data);
+    try {
+      // 創建一個唯一的 iframe ID
+      const iframeId = 'activities-iframe-' + Date.now();
       
-      if (data && data.success === true) {
-        if (Array.isArray(data.activities) && data.activities.length > 0) {
-          console.log('成功獲取活動列表, 活動數量:', data.activities.length);
-          activities = data.activities;
-          renderActivityList();
-          resolve(data);
-        } else {
-          console.warn('API返回成功，但沒有活動數據:', data);
-          // 即使沒有活動，也應該清空加載提示
-          document.getElementById('noActivitiesMsg').innerHTML = '目前沒有開放報名的活動';
-          resolve(data);
+      // 創建並添加 iframe
+      const iframe = document.createElement('iframe');
+      iframe.id = iframeId;
+      iframe.style.display = 'none';
+      iframe.src = url;
+      document.body.appendChild(iframe);
+      
+      // 設定超時處理
+      const timeout = setTimeout(() => {
+        console.error('活動數據獲取超時');
+        if (iframe.parentNode) {
+          document.body.removeChild(iframe);
         }
-      } else {
-        console.error('API返回失敗或格式不正確:', data);
-        showResult('無法獲取活動資料', 'danger');
-        // 顯示錯誤信息
-        document.getElementById('noActivitiesMsg').innerHTML = '無法獲取活動資料，請稍後再試';
-        reject('API返回數據格式不正確');
-      }
+        noMsg.innerHTML = '資料載入超時，<a href="javascript:location.reload()">點擊重試</a>';
+        reject(new Error('獲取活動超時'));
+      }, 15000); // 15秒超時
       
-      // 刪除已執行的腳本標籤
-      const scriptElement = document.getElementById('jsonp-script');
-      if (scriptElement && scriptElement.parentNode) {
-        document.body.removeChild(scriptElement);
-      }
+      // 監聽 iframe 加載事件
+      iframe.onload = function() {
+        clearTimeout(timeout);
+        
+        try {
+          // 嘗試從 iframe 獲取內容
+          const iframeContent = iframe.contentDocument || iframe.contentWindow.document;
+          let jsonText = iframeContent.body.innerText;
+          
+          console.log('獲取到原始數據:', jsonText);
+          
+          // 確保獲取的是 JSON
+          if (jsonText.startsWith('{') || jsonText.startsWith('[')) {
+            const data = JSON.parse(jsonText);
+            
+            console.log('解析後數據:', data);
+            
+            if (data && data.success === true) {
+              if (Array.isArray(data.activities) && data.activities.length > 0) {
+                console.log('成功獲取活動列表, 活動數量:', data.activities.length);
+                activities = data.activities;
+                renderActivityList();
+                resolve(data);
+              } else {
+                console.warn('API返回成功，但沒有活動數據:', data);
+                noMsg.innerHTML = '目前沒有開放報名的活動';
+                resolve(data);
+              }
+            } else {
+              console.error('API返回失敗:', data);
+              noMsg.innerHTML = '無法獲取活動資料，<a href="javascript:location.reload()">點擊重試</a>';
+              reject(new Error('API返回失敗'));
+            }
+          } else {
+            console.error('返回的不是有效的JSON:', jsonText);
+            noMsg.innerHTML = '返回數據格式錯誤，<a href="javascript:location.reload()">點擊重試</a>';
+            reject(new Error('返回數據格式錯誤'));
+          }
+        } catch (error) {
+          console.error('解析iframe內容時出錯:', error);
+          noMsg.innerHTML = '數據解析錯誤，<a href="javascript:location.reload()">點擊重試</a>';
+          reject(error);
+        } finally {
+          // 移除iframe
+          if (iframe.parentNode) {
+            document.body.removeChild(iframe);
+          }
+        }
+      };
       
-      // 清理全局回調
-      delete window.handleActivitiesResponse;
-    };
-    
-    // 創建腳本元素
-    const script = document.createElement('script');
-    script.id = 'jsonp-script';
-    script.src = url + params;
-    script.onerror = function() {
-      console.error('JSONP腳本加載失敗');
-      showResult('載入活動失敗，請稍後再試。', 'danger');
-      document.getElementById('noActivitiesMsg').innerHTML = '載入活動失敗，請稍後再試';
-      reject('腳本加載失敗');
-      if (script.parentNode) {
-        document.body.removeChild(script);
-      }
-    };
-    
-    // 添加超時處理
-    const timeout = setTimeout(function() {
-      console.error('獲取活動數據超時');
-      if (window.handleActivitiesResponse) {
-        delete window.handleActivitiesResponse;
-      }
-      if (script.parentNode) {
-        document.body.removeChild(script);
-      }
-      document.getElementById('noActivitiesMsg').innerHTML = '獲取活動數據超時，請刷新頁面重試';
-      showResult('獲取活動數據超時', 'danger');
-      reject('請求超時');
-    }, 15000); // 15秒超時
-    
-    // 修改成功回調以清除超時計時器
-    const originalCallback = window.handleActivitiesResponse;
-    window.handleActivitiesResponse = function(data) {
-      clearTimeout(timeout);
-      originalCallback(data);
-    };
-    
-    // 添加到頁面
-    document.body.appendChild(script);
+      // 處理 iframe 加載失敗
+      iframe.onerror = function(error) {
+        clearTimeout(timeout);
+        console.error('iframe加載失敗:', error);
+        if (iframe.parentNode) {
+          document.body.removeChild(iframe);
+        }
+        noMsg.innerHTML = '資料載入失敗，<a href="javascript:location.reload()">點擊重試</a>';
+        reject(new Error('iframe加載失敗'));
+      };
+      
+    } catch (error) {
+      console.error('創建iframe時出錯:', error);
+      noMsg.innerHTML = '系統錯誤，<a href="javascript:location.reload()">點擊重試</a>';
+      reject(error);
+    }
   });
 }
 
-// 初始化頁面
+// 直接嘗試重試函數
+function retryFetchActivities(maxRetries = 3) {
+  let retryCount = 0;
+  
+  function attemptFetch() {
+    return fetchActivities().catch(error => {
+      retryCount++;
+      console.log(`獲取活動失敗，第 ${retryCount} 次重試...`);
+      
+      if (retryCount < maxRetries) {
+        // 等待 2 秒後重試
+        return new Promise(resolve => setTimeout(resolve, 2000)).then(attemptFetch);
+      } else {
+        console.error('已達到最大重試次數，放棄獲取活動');
+        throw error;
+      }
+    });
+  }
+  
+  return attemptFetch();
+}
+
+// 修改初始化函數
 window.addEventListener('DOMContentLoaded', function() {
-  fetchActivities();
+  console.log('頁面載入完成，開始獲取活動數據');
+  retryFetchActivities()
+    .catch(error => {
+      console.error('獲取活動數據最終失敗:', error);
+      document.getElementById('noActivitiesMsg').innerHTML = '無法載入活動數據，請稍後再試';
+    });
 });
+
