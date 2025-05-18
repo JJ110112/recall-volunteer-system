@@ -26,7 +26,13 @@ async function checkRegistrationStatus(lineId) {
     const url = 'https://script.google.com/macros/s/AKfycbweFq6yYsv6YAbd7qiHSSsVIOjl88FiC6suYUWL3s8LsSIo45duVhDMX_lo9_erP9inWw/exec?action=getUserRegistrations&lineId=' + lineId;
     const res = await fetch(url);
     const data = await res.json();
-    return data.success ? data.registrations : [];
+    
+    // 確保返回的是數組，並且每個項目都有必要的屬性
+    if (data.success && Array.isArray(data.registrations)) {
+      // 過濾掉無效的註冊項目
+      return data.registrations.filter(reg => reg && typeof reg === 'object' && reg.timeSlotId);
+    }
+    return [];
   } catch (e) {
     console.error('檢查報名狀態失敗', e);
     return [];
@@ -40,7 +46,17 @@ async function renderActivityList() {
   let userRegistrations = [];
   
   if (lineId) {
-    userRegistrations = await checkRegistrationStatus(lineId);
+    try {
+      userRegistrations = await checkRegistrationStatus(lineId);
+      // 確保 userRegistrations 是數組
+      if (!Array.isArray(userRegistrations)) {
+        console.error('userRegistrations 不是數組:', userRegistrations);
+        userRegistrations = [];
+      }
+    } catch (error) {
+      console.error('獲取報名狀態時出錯:', error);
+      userRegistrations = [];
+    }
   }
   
   const list = document.getElementById('activityList');
@@ -56,9 +72,16 @@ async function renderActivityList() {
   noMsg.classList.add('d-none');
   
   activities.forEach((act, idx) => {
+    // 確保 act 有有效的 id
+    if (!act || !act.id) {
+      console.warn('活動缺少ID:', act);
+      return;  // 跳過此活動
+    }
+    
     // 檢查用戶是否已報名此活動
-    const isRegistered = userRegistrations.some(reg => reg.timeSlotId === act.id);
-    const registrationId = isRegistered ? userRegistrations.find(reg => reg.timeSlotId === act.id).id : null;
+    const isRegistered = Array.isArray(userRegistrations) && userRegistrations.some(reg => reg && reg.timeSlotId === act.id);
+    const registrationItem = isRegistered ? userRegistrations.find(reg => reg && reg.timeSlotId === act.id) : null;
+    const registrationId = registrationItem?.id || null;
     
     // 日期格式處理
     let dateObj = (typeof act.date === 'string' && act.date.length > 10) ? new Date(act.date) : new Date(act.date + 'T00:00:00');
